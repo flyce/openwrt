@@ -30,11 +30,7 @@ RUN set -eux; \
 # Final image - scratch so it's minimal
 FROM scratch
 ARG OPENWRT_VERSION
-LABEL org.opencontainers.image.title="OpenWrt" \
-      org.opencontainers.image.version="${OPENWRT_VERSION}" \
-      org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY}" \
-      org.opencontainers.image.description="OpenWrt rootfs for arm64 (downloaded prebuilt)" \
-      org.opencontainers.image.licenses="GPL-2.0"
+# Labels (title, version, source, description, license) are injected by docker/metadata-action in the workflow.
 
 # Copy filesystem
 COPY --from=fetch / / 
