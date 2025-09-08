@@ -42,6 +42,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debug environment
+        run: |
+          set -eux
+          echo "Actor: $GITHUB_ACTOR"
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Lowercase image: ${{ steps.repo.outputs.name }}"
+          echo "Workflow permissions (expect packages write):"
+          # The following call is just to show docker CLI works; it will not expose the token
+          docker info | grep -i username || true
+          echo "Buildx version:"; docker buildx version
+          echo "Listing existing local images (before build):"; docker image ls | head -n 20
+
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
@@ -63,6 +75,19 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           provenance: false
+          no-cache: true
+
+      - name: Inspect pushed main tag (best-effort)
+        if: success()
+        run: |
+          set -eux
+          tag=$(echo "${{ steps.meta.outputs.tags }}" | tr ' ' '\n' | grep ':main$' || true)
+          if [ -n "$tag" ]; then
+            echo "Inspecting $tag"
+            docker buildx imagetools inspect "$tag" || echo "Inspect failed (might be private or push failed)"
+          else
+            echo "No :main tag in current ref"
+          fi
 
       - name: Summary
         run: |
